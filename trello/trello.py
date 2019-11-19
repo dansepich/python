@@ -27,11 +27,14 @@ def get_lists(board_id, list_name):
     return 'No ID Found'
 
 def add_card(list_id):
-    url = "https://api.trello.com/1/cards"
-    
+    addCardsURL = "https://api.trello.com/1/cards"
+    existingCardsURL = "https://api.trello.com/1/lists/"+list_id+"/cards/"
+    querystring = {"key":key,"token":token}
+    existingCardsDetails = requests.request("GET", existingCardsURL, params=querystring)
     for todo in getListFromProps('todos'):
-        querystring = {"idList":list_id,"keepFromSource":"all","key":key,"token":token,"name":todo}
-        response = requests.request("POST", url, params=querystring)
+        if not todo in existingCardsDetails.text:
+            querystring = {"idList":list_id,"keepFromSource":"all","key":key,"token":token,"name":todo}
+            response = requests.request("POST", addCardsURL, params=querystring)
 
 
 def text_link(board_id):
@@ -70,7 +73,12 @@ def main():
             boardID = f.read().replace('\n', '')
     if str(boardExists(boardID)) == '<Response [200]>':
         print('Board Exists')
+        ##Archive cards in Done column
         cleanupList(get_lists(boardID,'Done'))
+        ##Add default items to list
+        add_card(get_lists(boardID,'To Do'))
+        ##Delete Duplicates in To Do column
+
     else:
         print('Board does not exist, creating new board')
         boardID = create_board()
