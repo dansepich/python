@@ -1,6 +1,7 @@
-import requests
-import os
 from datetime import date
+from datetime import datetime
+import os
+import requests
 import textAlert
 import yaml
 
@@ -31,11 +32,14 @@ def add_cards(list_id):
     existing_cards_URL = "https://api.trello.com/1/lists/"+list_id+"/cards/"
     query_string = {"key":key,"token":token}
     existing_cards_details = requests.request("GET", existing_cards_URL, params=query_string)
-    for todo in get_list_from_props('todos'):
-        if not todo in existing_cards_details.text:
-            query_string = {"idList":list_id,"keepFromSource":"all","key":key,"token":token,"name":todo}
-            response = requests.request("POST", add_cards_URL, params=query_string)
-            add_label(response.json()['id'], 'blue')
+    lists = ["all", "weekdays", "Monday", "Thursday", "Saturday"]
+    for list_scope in lists:
+        if(list_scope == (datetime.today().strftime('%A')) or (list_scope == "weekdays" and is_weekday())): 
+            for todo in get_list_from_props(list_scope):
+                if not todo in existing_cards_details.text:
+                    query_string = {"idList":list_id,"keepFromSource":"all","key":key,"token":token,"name":todo}
+                    response = requests.request("POST", add_cards_URL, params=query_string)
+                    add_label(response.json()['id'], 'blue')
 
 def add_label(card_id, color):
     url = "https://api.trello.com/1/cards/"+card_id+"/labels"
@@ -71,6 +75,13 @@ def cleanup_list(list_ID):
     query_string = {"key":key,"token":token}
     response = requests.request("POST", url, params=query_string)
     return(response)
+
+def is_weekday():
+  weekno = datetime.today().weekday()
+  if weekno<5:
+      return True
+  else:
+      return False
 
 def main():
     board_ID = '0'
