@@ -27,15 +27,21 @@ def get_list(board_id, list_name):
     return 'No ID Found'
 
 def add_cards(list_id):
-    add_cardss_URL = "https://api.trello.com/1/cards"
+    add_cards_URL = "https://api.trello.com/1/cards"
     existing_cards_URL = "https://api.trello.com/1/lists/"+list_id+"/cards/"
     query_string = {"key":key,"token":token}
     existing_cards_details = requests.request("GET", existing_cards_URL, params=query_string)
     for todo in get_list_from_props('todos'):
         if not todo in existing_cards_details.text:
             query_string = {"idList":list_id,"keepFromSource":"all","key":key,"token":token,"name":todo}
-            response = requests.request("POST", add_cardss_URL, params=query_string)
+            response = requests.request("POST", add_cards_URL, params=query_string)
+            add_label(response.json()['id'], 'blue')
 
+def add_label(card_id, color):
+    url = "https://api.trello.com/1/cards/"+card_id+"/labels"
+    querystring = {"color":color,"key":key,"token":token}
+    response = requests.request("POST", url, params=querystring)
+    return response
 
 def text_link(board_id):
     url = "https://api.trello.com/1/boards/"+board_id
